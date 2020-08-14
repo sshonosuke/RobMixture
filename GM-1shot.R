@@ -2,14 +2,12 @@
 ###        Simulation of Gaussian mixture                     ###
 ###-----------------------------------------------------------###
 set.seed(123)
-source("WCE-function.R")
-
+source("RGM-function.R")
 
 N <- 500   # number of observations
-
 K <- 3  # number of components
-p <- 2  # dimension
-om <- 0.05   # outlier ratio
+p <- 5  # dimension
+om <- 0.06   # outlier ratio
 
 nb <- N*(1-om)
 
@@ -37,36 +35,48 @@ PP0 <- c(0.3,0.3,0.4)
 
 
 
-# data generation
-Y <- matrix(NA, N, p)
+###  data generation
+Y <- matrix(NA, N, p)     # data 
+clust <- c()    # true classification (0 denotes outlier)
+
+# non-outlier
 for(i in 1:N){
   ch <- sample(1:K, 1, prob=PP0)
   Y[i,] <- mvrnorm(1, Mu0[,ch], Sig0[,,ch])
+  clust[i] <- ch
 }
 
-# outlier 
-for(i in (nb+1):N){
-  dd <- 1
-  while(max(dd)>0.005){
-    prop <- c(runif(1,-10,10), runif(1,-5,5), runif(p-2,-3,3))
-    Y[i,] <- prop
-    dd <- rep()
-    for(k in 1:3){  dd[k] <- dmvnorm(prop, Mu0[,k], Sig0[,,k])  }
+# outlier
+if(om>0){
+  for(i in (nb+1):N){
+    clust[i] <- 0
+    dd <- 0
+    while(dd < (5*p)){
+      prop <- c(runif(1,-10,10), runif(1,-5,5), runif(p-2,-3,3))
+      Y[i,] <- prop
+      D <- rep()
+      for(k in 1:3){
+        D[k] <- t(prop-Mu0[,k])%*%solve(Sig0[,,k])%*%(prop-Mu0[,k])
+      }
+      dd <- min(D)
+    }
   }
 }
 
-plot(Y, main="simulated data")
 
+plot(Y, col=clust+1, main="simulated data")    # black points are outliers 
 
 
 
 
 ##  Estimation  ##
-opt.K <- RGM.selection(Y, gam=0.5, C=20)
-fit <- RGM(Y, K=opt.K, gam=0.5, C=20)
+select <- RGM.select(Y, K.min=2, K.max=7, gam=0.2, C=20)
+select$opt.K    # selected number of components
 
-fit$Mu
-fit$Sigma
-fit$Pi
+fit <- select$opt.fit
+fit$Mu     # mean vector
+fit$Sigma   # variance-covariance matrix
+fit$Pi    # mixing proportion 
+fit$out    # detected outliers
 
 

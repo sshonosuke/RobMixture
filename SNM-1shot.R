@@ -2,11 +2,11 @@
 ###        Simulation of skew normal mixture                  ###
 ###-----------------------------------------------------------###
 set.seed(123)
-source("WCE-function.R")
+source("RSNM-function.R")
 library(truncnorm)
 
 
-# density of skew-normal 
+## density of skew-normal 
 dens <- function(x1, x2, Mu, Sig, Psi){
   xx <- c(x1,x2)
   Om <- Sig+Psi%*%t(Psi)
@@ -17,46 +17,53 @@ dens <- function(x1, x2, Mu, Sig, Psi){
 }
 
 
-# settings
+## settings
 N <- 500   # number of observations
 om <- 0.06    # outlier ratio
-ran <- 15      # range of outliers
-
+ran <- 10   # outlier range
 nb <- N*(1-om)
+p <- 2    # dimension
+K <- 2
+cc <- 1
 
 
-# true parameters
-mu <- c(1.5, 1.5)
+## true parameters
+mu <- c(cc, cc, rep(0, p-2))
 Mu0 <- cbind(mu, -mu)
-Sig0 <- matrix(c(1,0.3,0.3,1), 2, 2)
-psi <- c(2, 2)
-Psi0 <- cbind(psi,-psi)
+Sig0 <- diag( rep(1,p) )
+Sig0[1:2,1:2] <- matrix(c(1, 0.3, 0.3, 1), 2, 2)
+psi <- c(2, 2, rep(0, p-2))
+Psi0 <- cbind(psi, -psi)
 PP0 <- c(0.4, 0.6)
 
 
-# data generation 
-Y <- matrix(NA, N, 2)
+## data generation 
+Y <- matrix(NA, N, p)
+clust <- c()
+
+# genuine observations
 for(i in 1:N){
-  sn <- rtruncnorm(1,a=0)
-  ep <- mvrnorm(1,c(0,0),Sig0)
-  if(PP0[1]>runif(1)){
-    Y[i,] <- Mu0[,1]+Psi0[,1]*sn+ep
-  } else{
-    Y[i,] <- Mu0[,2]+Psi0[,2]*sn+ep
-  }
+  sn <- rtruncnorm(1, a=0)
+  ep <- mvrnorm(1, rep(0, p), Sig0)
+  ch <- sample(1:K, size=1, prob=PP0)
+  clust[i] <- ch
+  Y[i,] <- Mu0[,ch]+Psi0[,ch]*sn+ep
 }
 
 # outlier generation 
 for(i in (nb+1):N){
   d1 <- d2 <- 1
-  while(d1>0.005 | d2>0.005){
-    prop <- c(runif(1, -ran, ran), runif(1, -ran, ran))
-    d1 <- dens(prop[1], prop[2], Mu0[,1], Sig0, Psi0[,1])
-    d2 <- dens(prop[1], prop[2], Mu0[,2], Sig0, Psi0[,2])
+  while(d1<5*p | d2<5*p){
+    prop <- c(runif(1, -ran, ran), runif(1, -ran, ran), runif(p-2, -3, 3))
+    d1 <- t(prop-Mu0[,1])%*%solve(Sig0)%*%(prop-Mu0[,1])
+    d2 <- t(prop-Mu0[,2])%*%solve(Sig0)%*%(prop-Mu0[,2])
   }
-  Y[i,]=prop
+  Y[i,] <- prop
+  clust[i] <- 0
 }
 
+
+par(mfcol=c(1,1))
 plot(Y, main="simulated data")
 
 
@@ -64,22 +71,23 @@ plot(Y, main="simulated data")
 
 
 ##  Estimation  ##
-fit1 <- RSNM(Y, K=2, gam=0.5, C=20)
+fit1 <- RSNM(Y, K=2, gam=0.2, C=10)
 Mu1 <- fit1$Mu
 Sig1 <- fit1$Sigma
 Psi1 <- fit1$Psi
 PP1 <- fit1$Pi
 
-fit2 <- RSNM(Y, K=2, gam=0, C=20)
+fit2 <- RSNM(Y, K=2, gam=0, C=10)
 Mu2 <- fit2$Mu
 Sig2 <- fit2$Sigma
 Psi2 <- fit2$Psi
 PP2 <- fit2$Pi
 
 
-# contour plot of estimated density
+
+###  contour plot of estimated density
 mc <- 200     # number of evaluation points
-x1 <- x2 <- seq(-10, 10, length=mc)     # evaluation points
+x1 <- x2 <- seq(-8, 8, length=mc)     # evaluation points
 
 # estimated density (robust skew normal mixture)
 Z1 <- matrix(NA, mc, mc)
@@ -116,10 +124,12 @@ for(i in 1:mc){
 tZ <- PP0[1]*tZ1 + PP0[2]*tZ2
 
 
-contour(x1, x2, Z.est1, col="blue", lwd=1.5, main="skew normal mixture")
-contour(x1, x2, Z.est2, col="red", lwd=1.5, main="", add=T)
-contour(x1, x2, tZ, col="black", lwd=1.5, add=T)
+
+## Figure
+contour(x1, x2, Z.est1, col="red", lwd=1.5, main="skew normal mixture")
+contour(x1, x2, Z.est2, col="green", lwd=1.5, main="", add=T)
+contour(x1, x2, tZ, col="blue", lwd=1.5, add=T)
 points(Y[1:nb,], col=rgb(0, 0, 0, alpha=0.3))
 points(Y[(nb+1):N,], col=rgb(0, 0, 0, alpha=0.3), pch=4)
-legend("topleft", legend=c("WCE", "SNM", "True"), lty=1, col=c("blue", "red", "Black"))
+legend("topleft", legend=c("WCE", "SNM", "True"), lty=1, col=c("red", "green", "blue"))
 legend("bottomright", legend=c("non-outlier", "outlier"), col=1, pch=c(1,4))
