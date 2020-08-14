@@ -4,7 +4,10 @@ Sugasawa, S. and Kobayashi, G. (2020). Robust Mixture Modeling using Weighted Co
 
 The repository includes the following 4 files.
 
- * WCE-function.R : The script implementing the proposed methods
+ * RGM-function.R : The script implementing robust Gaussian mixture
+ * RMOE-function.R : The script implementing robust mixture-of-experts
+ * RSNM-function.R : The script implementing robust skew normal mixture
  * GM-1shot.R : A one-shot simulation of Gaussian mixture
  * SNM-1shot.R : A one-shot simulation of skew normal mixture
- * MOE-tone.R: Illustration of mixture of experts using tone data 
+ * Tone.R: Illustration of mixture of experts using tone data 
+ * Banknote.R: Illustration of skew normal mixture using Swiss banknote data 
