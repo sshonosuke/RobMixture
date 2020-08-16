@@ -2,7 +2,7 @@ This repository provides R code implementing robust mixture modeling via Expecta
 
 Sugasawa, S. and Kobayashi, G. (2020). Robust Mixture Modeling using Weighted Complete Estimating Equations. https://arxiv.org/abs/2004.03751
 
-The repository includes the following 4 files.
+The repository includes the following files.
 
  * RGM-function.R : The script implementing robust Gaussian mixture
  * RMOE-function.R : The script implementing robust mixture-of-experts
