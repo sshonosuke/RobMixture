@@ -17,8 +17,8 @@ library(tclust)
 # maxitr: maximum number of iteration 
 # alpha: tuning parameter outlier detection
 # init: algorithm to compute initial values
-RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=100, alpha=0.01, init="TCL"){
-  EPS <- 10^(-3)   # torelence rate
+RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=1000, alpha=0.01, init="TCL"){
+  EPS <- 10^(-4)   # torelence rate
   N <- dim(Y)[1]
   p <- dim(Y)[2]
   
@@ -43,12 +43,10 @@ RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=100, alpha=0.01, init="TCL"){
   for(k in 1:K){ Sig[,,k] <- 0.5*(Sig[,,k]+t(Sig[,,k])) }
   
   ### EEE iteration
-  val <- 0
   uu <- NA
+  val <- c()
   
   for(j in 1:maxitr){
-    uu0 <- uu
-    val0 <- val
     Mu0 <- Mu
     
     ##  E-step
@@ -95,20 +93,10 @@ RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=100, alpha=0.01, init="TCL"){
       Sig[,,k] <- 0.5*(Sig[,,k]+t(Sig[,,k]))
     }
     
-    # Convergence check (value of EE)
-    Dens <- matrix(NA,N,K)
-    for(k in 1:K){
-      Dens[,k] <- dmvnorm(Y, Mu[,k], Sig[,,k])
-    }
-    uu <- t(t(Dens)*PP)
-    uu <- uu/apply(uu,1,sum)
-    ww <- Dens^(gam)
-    mu.EE <- c()
-    for(k in 1:K){
-      mu.EE[k] <- sum(uu[,k]*ww[,k]*t(t(Y)-Mu[,k]))
-    }
-    val <- sum(abs(mu.EE/N))
-    if( val < EPS ){ break }
+    # Convergence check 
+    val[j] <- sqrt(sum((Mu-Mu0)^2))/sum(abs(Mu0))
+    if( val[j] < EPS ){ break }
+    if( j>1 & min(abs(val[j]-val[1:(j-1)])) < 10^(-7) ){ break }
   }
   
   # outlier detection
