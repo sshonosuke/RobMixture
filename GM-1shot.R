@@ -70,7 +70,7 @@ plot(Y, col=clust+1, main="simulated data")    # black points are outliers
 
 
 ##  Estimation  ##
-select <- RGM.select(Y, K.min=2, K.max=7, gam=0.2, C=20)
+select <- RGM.select(Y, K.min=2, K.max=7, gam=0.2)
 select$opt.K    # selected number of components
 
 fit <- select$opt.fit

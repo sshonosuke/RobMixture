@@ -17,7 +17,7 @@ library(tclust)
 # maxitr: maximum number of iteration 
 # alpha: tuning parameter outlier detection
 # init: algorithm to compute initial values
-RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=1000, alpha=0.01, init="TCL"){
+RGM <- function(Y, K=2, gam=0.2, C=1000, maxitr=1000, alpha=0.01, init="TCL"){
   EPS <- 10^(-4)   # torelence rate
   N <- dim(Y)[1]
   p <- dim(Y)[2]
@@ -147,7 +147,7 @@ RGM <- function(Y, K=2, gam=0.2, C=10, maxitr=1000, alpha=0.01, init="TCL"){
 # gam: value of gamma in the weight
 # C: eigen constraint
 # maxitr: maximum number of iteration 
-RGM.select <- function(Y, K.min=2, K.max=7, gam=0.2, C=10, maxitr=100, alpha=0.01){
+RGM.select <- function(Y, K.min=2, K.max=7, gam=0.2, C=1000, maxitr=100, alpha=0.01){
   N <- dim(Y)[1]
   p <- dim(Y)[2]
   K.set <- K.min:K.max
